@@ -1,21 +1,25 @@
+
+from flask import Flask, render_template, request, jsonify
 import random
 
-def generate_passwd(length):
-    chars = 'abcdefghijkklmnopqrstuvwxyz/01234567890#@!$*=+-'
-    password = ''
-    for char in range(length):
-        char = random.choice(chars)
-        password += char
-    return password
+app = Flask(__name__)
 
+def generate_passwd(length=8):
+    chars = 'abcdefghijklmnopqrstuvwxyz0123456789#@!$*=+-/'
+    return ''.join(random.choice(chars) for _ in range(length))
 
-def main():
-    while True:
-        length = int(input('How long would you like the passwd: '))
-        if length >= 6:
-            print(generate_passwd(length))
-            break
-        else:
-            continue
-main()
+@app.route('/')
+def home():
+    return render_template('index.html')
 
+@app.route('/generate', methods=['POST'])
+def generate():
+    data = request.get_json()
+    length = int(data.get('length', 8))
+    if length < 6:
+        return jsonify({'error': 'Password length must be at least 6.'}), 400
+    password = generate_passwd(length)
+    return jsonify({'password': password})
+
+if __name__ == '__main__':
+    app.run(debug=True)
